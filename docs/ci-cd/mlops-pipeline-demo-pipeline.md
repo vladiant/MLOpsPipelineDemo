@@ -75,13 +75,17 @@ docker compose down -v             # stop and wipe the trained-model volume
 | Service | Image | Host port | Role |
 |---------|-------|-----------|------|
 | `serving` | built from `Dockerfile` | `8000` | FastAPI app + `/metrics` |
-| `otel-collector` | `otel/opentelemetry-collector-contrib:0.111.0` | `4317`, `8889` | OTLP ingest → re-expose metrics |
-| `prometheus` | `prom/prometheus:v2.55.1` | `9090` | scrapes service + collector |
+| `otel-collector` | `otel/opentelemetry-collector-contrib:0.111.0` | `4317`, `8889` | present for parity / future OTLP traces |
+| `prometheus` | `prom/prometheus:v2.55.1` | `9090` | scrapes service `/metrics` (+ collector, parity only) |
 | `grafana` | `grafana/grafana:11.3.0` | `3000` | provisioned dashboard |
 
-All services share the `mlops` bridge network. The service pushes OTLP metrics to the
-collector (`MLOPS_OTLP_ENDPOINT=otel-collector:4317`) **and** exposes the authoritative
-pull `/metrics`; Prometheus scrapes both targets every 5 s.
+All services share the `mlops` bridge network. Metrics flow via the authoritative
+Prometheus **pull** path: the service exposes `/metrics` and Prometheus scrapes it every
+5 s. OTLP metric push to the collector is **disabled by default** — `MLOPS_OTLP_ENDPOINT`
+is intentionally left **unset** in compose so the `mlops_` counters are scraped from a
+single target (the service); pushing the same counters through the collector's `:8889`
+exposition would double-count them in dashboard `sum()`s. The collector stays in the
+stack for reference parity and future OTLP traces (see §4.1).
 
 ### URLs
 

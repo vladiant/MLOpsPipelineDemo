@@ -23,7 +23,7 @@ requirements-analyst → system-architect → python-developer → qa-engineer �
 | 5. Release/CI | Release Engineer | ✅ Done | Dockerfile + docker-compose (service/OTel/Prometheus/Grafana) verified live; GitHub Actions CI; pins reconciled via constraints.txt. AC-11/12 met; AC-14 p95 ≈ 25 ms observed |
 | 5b. Defect fix loop | Python Developer → QA | ✅ Done | Gauges → ObservableGauge; 35 tests pass, 91% cov; QA APPROVED, no regression |
 | 5c. Dashboard cleanup | Release Engineer | ✅ Done | Removed last_over_time workaround; live-verified gauges persist per scrape; defect RESOLVED |
-| 6. Documentation | Technical Writer | 🔄 In progress | README + CHANGELOG + run instructions |
+| 6. Documentation | Technical Writer | ✅ Done | Portfolio README (architecture, quickstarts, API, observability, CI, layout); CHANGELOG.md (Keep a Changelog, observable-gauge fix under Fixed); status updated. Awaiting PM version tag |
 
 ## PM Decisions (open questions resolved)
 - **OQ-1 Dataset:** Breast-Cancer (Wisconsin) — binary, 30 continuous features.
@@ -54,3 +54,11 @@ requirements-analyst → system-architect → python-developer → qa-engineer �
 - `d3ca832` semver(minor): add container, observability stack, and CI pipeline (Stage 5)
 - Fix loop (5b): Release found synchronous-gauge staleness defect; PM routed to Developer → converted to ObservableGauge; QA regression APPROVED (35 tests, 91% cov).
 - `1e80d65` semver(patch): report gauges via OpenTelemetry observable gauges (Stage 5b)
+- `e1a0c61` semver(patch): simplify Grafana gauge panels after observable-gauge fix (Stage 5c)
+- OTLP doc discrepancy (writer-flagged) reconciled by Technical Writer: CI-CD doc §3 corrected to match compose (OTLP push disabled by default; Prometheus pull is authoritative).
+
+## Technical Writer notes (Stage 6)
+- **Docs shipped:** rewrote `README.md` as the portfolio front door (project summary + value, Mermaid architecture of the train→serve→observe→drift loop, local + Docker Compose quickstarts, API reference with sample `/predict` request/response, observability section with `mlops_` metric names + dashboard-panel + PSI explanation, testing/CI, project layout, config env vars, explicit non-goals). Ports, Grafana dashboard name/uid, and compose commands were taken from `docker-compose.yaml`, `configs/prometheus/prometheus.yml`, `configs/grafana/provisioning/dashboards/mlops-overview.json`, and `docs/ci-cd/mlops-pipeline-demo-pipeline.md`.
+- **CHANGELOG:** added `CHANGELOG.md` (Keep a Changelog style) with all shipped work under `[0.1.0] - 2026-09-19` (placeholder — **PM to finalize version/date and attach the tag**). Observable-gauge staleness recorded under **Fixed**; `last_over_time` removal recorded under **Changed**.
+- **`last_over_time` audit:** confirmed no doc presents the removed `last_over_time` dashboard workaround as current behavior. `docs/ci-cd/...md §4.1` frames it as RESOLVED/removed; `status.md` row 5c is historical. README/CHANGELOG describe the direct-query gauges.
+- **⚠ Discrepancy for PM (do NOT fix code — doc-vs-doc):** `docs/ci-cd/mlops-pipeline-demo-pipeline.md §3` states the service "pushes OTLP metrics to the collector (`MLOPS_OTLP_ENDPOINT=otel-collector:4317`)", but the actual `docker-compose.yaml` intentionally leaves `MLOPS_OTLP_ENDPOINT` **unset** (OTLP push disabled to avoid double-counting; documented in the compose comments and §4.1 of the same file). §3 contradicts §4.1 and the compose file. README was written to match the real compose (OTLP push disabled, single-target scrape). Recommend system-architect/release-engineer reconcile §3 of the CI-CD doc.
