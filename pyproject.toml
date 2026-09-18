@@ -1,0 +1,74 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mlops-pipeline-demo"
+description = "Minimal but complete MLOps loop: train, version, serve, and observe a classifier."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+dynamic = ["version"]
+authors = [{ name = "MLOpsPipelineDemo" }]
+keywords = ["mlops", "fastapi", "opentelemetry", "prometheus", "drift", "psi"]
+classifiers = [
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "fastapi>=0.115,<0.116",
+    "uvicorn[standard]>=0.30,<0.31",
+    "pydantic>=2.7,<3",
+    "pydantic-settings>=2.3,<3",
+    "scikit-learn>=1.5,<1.6",
+    "numpy>=1.26,<2.1",
+    "joblib>=1.4,<2",
+    "opentelemetry-sdk>=1.27,<2",
+    "opentelemetry-exporter-prometheus>=0.48b0",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.27,<2",
+    "prometheus-client>=0.20,<1",
+    "python-json-logger>=2.0,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-cov",
+    "httpx",
+    "ruff",
+    "mypy",
+]
+
+[project.scripts]
+mlops-train = "mlops_pipeline.cli:train_command"
+mlops-serve = "mlops_pipeline.cli:serve_command"
+
+[tool.hatch.version]
+path = "src/mlops_pipeline/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mlops_pipeline"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI dependency-injection idiom uses Depends()/Query() in argument defaults.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path"]
+
+[tool.mypy]
+python_version = "3.11"
+packages = ["mlops_pipeline"]
+mypy_path = "src"
+ignore_missing_imports = true

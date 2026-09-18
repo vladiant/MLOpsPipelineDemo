@@ -18,8 +18,8 @@ requirements-analyst → system-architect → python-developer → qa-engineer �
 |-------|-------|--------|-------|
 | 1. Requirements | Requirements Analyst | ✅ Done | SRS at docs/requirements/SRS.md; 8 OQs resolved by PM |
 | 2. Design | System Architect | ✅ Done | Design at docs/design/DESIGN.md; FastAPI+Pydantic, joblib, src-layout `mlops_pipeline` |
-| 3. Implementation | Python Developer | 🔄 In progress | Implementing against DESIGN.md |
-| 4. QA | QA Engineer | ⬜ Not started | |
+| 3. Implementation | Python Developer | ✅ Done | src/mlops_pipeline; 25 pytest pass; ruff+mypy clean; CLI verified |
+| 4. QA | QA Engineer | 🔄 In progress | Full verification vs SRS acceptance criteria |
 | 5. Release/CI | Release Engineer | ⬜ Not started | |
 | 6. Documentation | Technical Writer | ⬜ Not started | |
 
@@ -39,3 +39,5 @@ requirements-analyst → system-architect → python-developer → qa-engineer �
 
 ## Commit / Release Log
 - `5123303` semver(patch): add SRS and project status tracker for MLOps loop (Stage 1)
+- `a1fabee` semver(patch): add architecture and design document (Stage 2)
+- Stage 3 pinned versions (R-1, for Release Engineer to reconcile): fastapi 0.115.14, scikit-learn 1.5.2, pydantic 2.13.5, numpy 2.0.2, joblib 1.6.0, uvicorn 0.30.6, opentelemetry-sdk 1.44.0, opentelemetry-exporter-prometheus 0.65b0.
