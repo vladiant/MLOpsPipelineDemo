@@ -1,0 +1,100 @@
+# Local MLOps loop: serving service + OpenTelemetry Collector + Prometheus + Grafana.
+# Brings the whole observe-the-model loop up with a single command and no manual
+# post-setup (SRS AC-12, NFR-4). Metrics-only per PM decision OQ-6 (no Tempo/Loki).
+#
+#   docker compose up --build
+#
+# Then:
+#   - Service:    http://localhost:8000  (/predict, /healthz, /readyz, /metrics)
+#   - Prometheus: http://localhost:9090
+#   - Grafana:    http://localhost:3000  (anonymous, dashboard "MLOps Overview")
+
+name: mlops-pipeline-demo
+
+services:
+  serving:
+    build:
+      context: .
+      args:
+        PYTHON_VERSION: "3.12"
+    image: mlops-pipeline-demo:local
+    container_name: mlops-serving
+    environment:
+      MLOPS_ARTIFACTS_DIR: /app/artifacts
+      # Metrics flow via the authoritative Prometheus pull path (/metrics, DESIGN §7.1).
+      # OTLP metric push is intentionally left unset so Prometheus scrapes the mlops_
+      # counters from ONE target only (the service) — pushing the same counters through
+      # the collector's :8889 exposition would double-count them in dashboard sums. The
+      # collector stays in the stack for reference parity and future OTLP traces (§7.2).
+      MLOPS_LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+    volumes:
+      # Named volume: initialized from the image, owned by the non-root app user,
+      # persists the model the container trains on first start.
+      - mlops-artifacts:/app/artifacts
+    depends_on:
+      otel-collector:
+        condition: service_started
+    networks:
+      - mlops
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    container_name: mlops-otel-collector
+    command: ["--config=/etc/otel/config.yaml"]
+    volumes:
+      - ./configs/otel-collector-config.yaml:/etc/otel/config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC ingest
+      - "8889:8889"   # Prometheus exposition of collected metrics
+    networks:
+      - mlops
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: mlops-prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=6h"
+    volumes:
+      - ./configs/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      serving:
+        condition: service_started
+      otel-collector:
+        condition: service_started
+    networks:
+      - mlops
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: mlops-grafana
+    environment:
+      # Dashboards-only demo: no login friction (PM decision OQ-8, no alerting).
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_USERS_DEFAULT_THEME: light
+    volumes:
+      - ./configs/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      prometheus:
+        condition: service_started
+    networks:
+      - mlops
+    restart: unless-stopped
+
+networks:
+  mlops:
+    driver: bridge
+
+volumes:
+  mlops-artifacts:

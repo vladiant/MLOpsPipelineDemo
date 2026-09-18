@@ -1,0 +1,30 @@
+# Minimal OpenTelemetry Collector pipeline — metrics only (PM decision OQ-6).
+# The service pushes OTLP metrics here; the collector re-exposes them on :8889 for
+# Prometheus to scrape. The OTLP receiver stays in place so traces/logs can be
+# enabled later (Tempo/Loki deferred) without restructuring this file.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  batch: {}
+
+exporters:
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    # Keep the mlops_ names as emitted by the app (no extra namespace prefix).
+    resource_to_telemetry_conversion:
+      enabled: true
+
+service:
+  telemetry:
+    logs:
+      level: info
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus]

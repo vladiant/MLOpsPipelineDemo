@@ -1,0 +1,111 @@
+name: CI
+
+# Lint, type-check, test (with coverage), and build the serving image.
+# Uses the QA-validated pins in constraints.txt for reproducibility (R-1, NFR-3).
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: lint · type-check · test (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            pyproject.toml
+            constraints.txt
+
+      - name: Install package + dev deps (pinned)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]" -c constraints.txt
+
+      - name: Ruff lint
+        run: ruff check .
+
+      - name: Ruff format check
+        run: ruff format --check .
+
+      - name: Mypy
+        run: mypy src
+
+      - name: Pytest (coverage + JUnit)
+        run: |
+          pytest \
+            --cov=mlops_pipeline \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --junitxml=junit.xml
+
+      - name: Upload test & coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-py${{ matrix.python-version }}
+          path: |
+            junit.xml
+            coverage.xml
+          if-no-files-found: ignore
+
+  docker-build:
+    name: build serving image
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: mlops-pipeline-demo:ci
+          build-args: |
+            PYTHON_VERSION=3.12
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke-test the image (train on first run → readiness)
+        run: |
+          docker run -d --name mlops-smoke -p 8000:8000 mlops-pipeline-demo:ci
+          echo "Waiting for /readyz ..."
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8000/readyz >/dev/null; then
+              echo "Service ready."
+              curl -s http://localhost:8000/metrics | grep -c '^mlops_' || true
+              docker rm -f mlops-smoke
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "Service did not become ready in time" >&2
+          docker logs mlops-smoke || true
+          docker rm -f mlops-smoke
+          exit 1
