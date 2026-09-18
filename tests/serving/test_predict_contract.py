@@ -33,6 +33,29 @@ def test_metrics_endpoint_exposes_mlops_metrics(
     assert "mlops_predicted_class" in text
 
 
+def test_metrics_expose_error_counter_and_model_info(
+    client: TestClient, sample_features: dict[str, float]
+) -> None:
+    # AC-9 / FR-17/FR-12: a bad request increments the error counter; model_info
+    # and the success/error request counters are all exposed with the mlops_ prefix.
+    client.post("/predict", json={"features": sample_features})  # 200 path
+    bad = dict(sample_features)
+    bad.pop(next(iter(bad)))
+    client.post("/predict", json={"features": bad})  # 422 path → error counter
+
+    text = client.get("/metrics").text
+    assert "mlops_prediction_errors" in text
+    assert 'error_type="validation"' in text
+    assert "mlops_model_info" in text
+    assert "mlops_model_ready" in text
+    # Every project metric carries the mlops_ namespace prefix (NFR-1).
+    metric_lines = [line for line in text.splitlines() if line and not line.startswith("#")]
+    assert any(line.startswith("mlops_") for line in metric_lines)
+    assert all(
+        not (line.startswith("commerce_") or line.startswith("app_")) for line in metric_lines
+    )
+
+
 def test_predict_proba_column_order_matches_metadata(
     trained_artifact: LoadedArtifact,
 ) -> None:
@@ -57,3 +80,34 @@ def test_prediction_log_has_required_fields(
     rec = records[-1]
     for field in ("request_id", "endpoint", "status", "latency_ms", "model_version"):
         assert hasattr(rec, field)
+
+
+def test_prediction_log_serializes_to_json_with_timestamp(capsys) -> None:
+    # AC-8 / FR-14: the emitted record is valid JSON carrying timestamp + all
+    # required fields (the JSON formatter path, not just LogRecord attributes).
+    import json
+
+    from mlops_pipeline.telemetry.logging import configure_logging, log_prediction
+
+    configure_logging("INFO")  # binds the JSON handler to the captured stdout
+    log_prediction(
+        request_id="req-123",
+        endpoint="/predict",
+        status=200,
+        latency_ms=1.25,
+        model_version="v-test",
+    )
+    line = capsys.readouterr().out.strip().splitlines()[-1]
+    record = json.loads(line)  # must be valid JSON
+    for field in (
+        "timestamp",
+        "request_id",
+        "endpoint",
+        "status",
+        "latency_ms",
+        "model_version",
+    ):
+        assert field in record, f"missing {field} in JSON log record"
+    assert record["request_id"] == "req-123"
+    assert record["status"] == 200
+    assert record["model_version"] == "v-test"
