@@ -1,5 +1,7 @@
 # Project Status — MLOpsPipelineDemo
 
+**Status:** ✅ SHIPPED — all SDLC stages complete; release `v0.1.0` tagged (awaiting user confirmation to push).
+
 **Goal:** Minimal but complete MLOps loop — train a small classifier on a public dataset, package it, serve it behind a REST/gRPC endpoint, and monitor drift/latency with the same OpenTelemetry/Prometheus/Grafana pattern used in `CommerceSystemDemo`.
 
 ## Scope (agreed with stakeholder)
@@ -62,3 +64,4 @@ requirements-analyst → system-architect → python-developer → qa-engineer �
 - **CHANGELOG:** added `CHANGELOG.md` (Keep a Changelog style) with all shipped work under `[0.1.0] - 2026-09-19` (placeholder — **PM to finalize version/date and attach the tag**). Observable-gauge staleness recorded under **Fixed**; `last_over_time` removal recorded under **Changed**.
 - **`last_over_time` audit:** confirmed no doc presents the removed `last_over_time` dashboard workaround as current behavior. `docs/ci-cd/...md §4.1` frames it as RESOLVED/removed; `status.md` row 5c is historical. README/CHANGELOG describe the direct-query gauges.
 - **⚠ Discrepancy for PM (do NOT fix code — doc-vs-doc):** `docs/ci-cd/mlops-pipeline-demo-pipeline.md §3` states the service "pushes OTLP metrics to the collector (`MLOPS_OTLP_ENDPOINT=otel-collector:4317`)", but the actual `docker-compose.yaml` intentionally leaves `MLOPS_OTLP_ENDPOINT` **unset** (OTLP push disabled to avoid double-counting; documented in the compose comments and §4.1 of the same file). §3 contradicts §4.1 and the compose file. README was written to match the real compose (OTLP push disabled, single-target scrape). Recommend system-architect/release-engineer reconcile §3 of the CI-CD doc.
+- **Release `v0.1.0`** tagged (annotated, local) — initial release, MINOR feature set. Push pending user confirmation.
