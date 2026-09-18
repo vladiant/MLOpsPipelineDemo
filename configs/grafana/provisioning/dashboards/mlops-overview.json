@@ -203,7 +203,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "max(last_over_time(mlops_drift_psi_aggregate[2m]))",
+          "expr": "max(mlops_drift_psi_aggregate)",
           "legendFormat": "aggregate PSI",
           "range": true,
           "refId": "A"
@@ -211,7 +211,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "topk(5, max by (feature) (last_over_time(mlops_feature_drift_psi[2m])))",
+          "expr": "topk(5, max by (feature) (mlops_feature_drift_psi))",
           "legendFormat": "{{feature}}",
           "range": true,
           "refId": "B"
@@ -248,7 +248,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "max by (model_version) (last_over_time(mlops_model_ready[1h]))",
+          "expr": "max by (model_version) (mlops_model_ready)",
           "legendFormat": "{{model_version}}",
           "range": true,
           "refId": "A"

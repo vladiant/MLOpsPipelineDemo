@@ -22,8 +22,8 @@ requirements-analyst → system-architect → python-developer → qa-engineer �
 | 4. QA | QA Engineer | ✅ Done | 33 pytest pass, 90% cov, 0 defects; APPROVED (AC-11/12/14 deferred to post-Release) |
 | 5. Release/CI | Release Engineer | ✅ Done | Dockerfile + docker-compose (service/OTel/Prometheus/Grafana) verified live; GitHub Actions CI; pins reconciled via constraints.txt. AC-11/12 met; AC-14 p95 ≈ 25 ms observed |
 | 5b. Defect fix loop | Python Developer → QA | ✅ Done | Gauges → ObservableGauge; 35 tests pass, 91% cov; QA APPROVED, no regression |
-| 5c. Dashboard cleanup | Release Engineer | 🔄 In progress | Remove now-unneeded last_over_time workaround + live smoke re-check |
-| 6. Documentation | Technical Writer | ⬜ Not started | After cleanup |
+| 5c. Dashboard cleanup | Release Engineer | ✅ Done | Removed last_over_time workaround; live-verified gauges persist per scrape; defect RESOLVED |
+| 6. Documentation | Technical Writer | 🔄 In progress | README + CHANGELOG + run instructions |
 
 ## PM Decisions (open questions resolved)
 - **OQ-1 Dataset:** Breast-Cancer (Wisconsin) — binary, 30 continuous features.
@@ -53,3 +53,4 @@ requirements-analyst → system-architect → python-developer → qa-engineer �
 - `7c6c23e` semver(patch): extend QA test coverage for acceptance criteria (Stage 4)
 - `d3ca832` semver(minor): add container, observability stack, and CI pipeline (Stage 5)
 - Fix loop (5b): Release found synchronous-gauge staleness defect; PM routed to Developer → converted to ObservableGauge; QA regression APPROVED (35 tests, 91% cov).
+- `1e80d65` semver(patch): report gauges via OpenTelemetry observable gauges (Stage 5b)

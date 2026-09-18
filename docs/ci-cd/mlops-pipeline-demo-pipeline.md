@@ -122,29 +122,29 @@ p95 query:
 > the rolling window reaches `MLOPS_DRIFT_MIN_SAMPLES` (default 100) predictions and the
 > background refresh tick has run, so the drift panel is empty on a cold service.
 
-### 4.1 Known limitation — synchronous gauges (defect flagged for the Developer/QA)
+### 4.1 Resolved — gauge staleness across scrapes (observable-gauge fix)
 
-The app instruments `mlops_model_ready`, `mlops_model_info`, `mlops_drift_psi_aggregate`,
-and `mlops_feature_drift_psi` with OpenTelemetry **synchronous** `Gauge` instruments
-(`create_gauge`, `telemetry/metrics.py`). Verified live behavior with
-`opentelemetry-exporter-prometheus 0.65b0`: a synchronous-gauge LastValue data point is
-**dropped after the first `collect()`** and only reappears if `set()` runs again before the
+**Status: RESOLVED.** Historically `mlops_model_ready`, `mlops_model_info`,
+`mlops_drift_psi_aggregate`, and `mlops_feature_drift_psi` were instrumented with
+OpenTelemetry **synchronous** `Gauge` instruments (`create_gauge`). With
+`opentelemetry-exporter-prometheus 0.65b0` a synchronous-gauge LastValue data point was
+**dropped after the first `collect()`** and only reappeared if `set()` ran again before the
 next collect. Because Prometheus scrapes every 5 s (each scrape is a `collect()`), these
-gauges are consumed between updates. Observed impact:
+gauges were consumed between updates: readiness/model-info (set once at startup) showed a
+single sample and the drift PSI panels only populated on the scrape that coincided with the
+refresh tick.
 
-- Counter/histogram panels (latency p95, error rate, throughput, predicted-class) — **fully correct**.
-- Drift PSI panels — populate at the refresh cadence (~15 s); one scrape per refresh catches the value.
-- `mlops_model_ready` / `mlops_model_info` — set only once at startup, so Prometheus captures a single sample.
+**Fix (product code, done by the Developer; QA verified):** the four instruments were switched
+to **`ObservableGauge`** with observer callbacks (as DESIGN §4.5 anticipated:
+`ObservableGauge|Gauge`). Observable gauges are re-read on every `collect()`, so each value
+re-reports at its current level on every Prometheus scrape. QA confirmed the values persist
+across two successive collections (35 tests pass).
 
-**Mitigation applied here (config-only, no product change):** the drift and readiness panels
-wrap their queries in `last_over_time(...)` so the last captured value is carried forward
-across the gaps. This keeps the dashboard readable without touching `src/`.
-
-**Recommended upstream fix (product code — out of Release scope):** switch these four
-instruments from synchronous `create_gauge` to **`ObservableGauge`** with observer callbacks
-(as DESIGN §4.5 already anticipated: `ObservableGauge|Gauge`). Observable gauges are re-read
-on every `collect()`, so values persist across scrapes with no `last_over_time` workaround.
-This is a small, well-scoped change for the Python Developer / QA to make and re-verify.
+**Config change applied here (config-only, no product change):** the `last_over_time(...)`
+workaround previously wrapped around the drift and readiness panel queries has been
+**removed** — those panels now use direct gauge queries
+(`max(mlops_drift_psi_aggregate)`, `topk(5, max by (feature) (mlops_feature_drift_psi))`,
+`max by (model_version) (mlops_model_ready)`), since values now persist per scrape.
 
 > Metrics flow via the pull path only. OTLP metric push to the collector is intentionally
 > disabled in compose so the same `mlops_` counters are scraped from a single target
