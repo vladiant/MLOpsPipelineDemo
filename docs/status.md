@@ -21,8 +21,9 @@ requirements-analyst → system-architect → python-developer → qa-engineer �
 | 3. Implementation | Python Developer | ✅ Done | src/mlops_pipeline; 25 pytest pass; ruff+mypy clean; CLI verified |
 | 4. QA | QA Engineer | ✅ Done | 33 pytest pass, 90% cov, 0 defects; APPROVED (AC-11/12/14 deferred to post-Release) |
 | 5. Release/CI | Release Engineer | ✅ Done | Dockerfile + docker-compose (service/OTel/Prometheus/Grafana) verified live; GitHub Actions CI; pins reconciled via constraints.txt. AC-11/12 met; AC-14 p95 ≈ 25 ms observed |
-| 5b. Defect fix loop | Python Developer → QA | 🔄 In progress | PM routed gauge defect back: switch drift/readiness/model_info gauges to ObservableGauge (design §4.5) |
-| 6. Documentation | Technical Writer | ⬜ Not started | After fix loop |
+| 5b. Defect fix loop | Python Developer → QA | ✅ Done | Gauges → ObservableGauge; 35 tests pass, 91% cov; QA APPROVED, no regression |
+| 5c. Dashboard cleanup | Release Engineer | 🔄 In progress | Remove now-unneeded last_over_time workaround + live smoke re-check |
+| 6. Documentation | Technical Writer | ⬜ Not started | After cleanup |
 
 ## PM Decisions (open questions resolved)
 - **OQ-1 Dataset:** Breast-Cancer (Wisconsin) — binary, 30 continuous features.
@@ -50,3 +51,5 @@ requirements-analyst → system-architect → python-developer → qa-engineer �
 - `157f4a9` semver(minor): implement train-package-serve-monitor MLOps pipeline (Stage 3)
 - QA (Stage 4): 33 tests pass, 90% coverage, 0 defects; verdict APPROVED with AC-11/12/14 deferred to post-Release QA.
 - `7c6c23e` semver(patch): extend QA test coverage for acceptance criteria (Stage 4)
+- `d3ca832` semver(minor): add container, observability stack, and CI pipeline (Stage 5)
+- Fix loop (5b): Release found synchronous-gauge staleness defect; PM routed to Developer → converted to ObservableGauge; QA regression APPROVED (35 tests, 91% cov).

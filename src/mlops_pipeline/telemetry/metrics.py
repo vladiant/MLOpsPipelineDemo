@@ -1,11 +1,26 @@
-"""OpenTelemetry metric instruments with the ``mlops_`` prefix (DESIGN §5)."""
+"""OpenTelemetry metric instruments with the ``mlops_`` prefix (DESIGN §5).
+
+Gauges use OTel *observable* gauges (``create_observable_gauge`` + callbacks) so
+their current value is re-reported on every collection/scrape. The Prometheus
+exporter (0.65b0) drops a *synchronous* gauge value after the first ``collect()``,
+which made ``mlops_model_ready``/``mlops_model_info``/drift PSI read as stale
+between updates; observable gauges match DESIGN §4.5 and fix that.
+"""
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from dataclasses import dataclass
+import threading
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass, field
 
-from opentelemetry.metrics import Counter, Histogram, Meter, MeterProvider
+from opentelemetry.metrics import (
+    CallbackOptions,
+    Counter,
+    Histogram,
+    Meter,
+    MeterProvider,
+    Observation,
+)
 
 __all__ = ["Metrics", "setup_metrics"]
 
@@ -23,6 +38,58 @@ _LATENCY_BUCKETS_SECONDS = (
 )
 
 
+class _ObservableGaugeStore:
+    """Thread-safe latest-observation store feeding the observable gauge callbacks.
+
+    The serving lifespan / drift-refresh loop push new values via the ``set_*``
+    methods; the observable-gauge callbacks read the stored observations on every
+    collection, so each scrape reports the current value instead of a stale one.
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._model_ready: list[Observation] = []
+        self._model_info: list[Observation] = []
+        self._drift: list[Observation] = []
+        self._drift_aggregate: list[Observation] = []
+
+    def set_model_ready(self, ready: bool, *, model_version: str) -> None:
+        with self._lock:
+            self._model_ready = [Observation(1 if ready else 0, {"model_version": model_version})]
+
+    def set_model_info(self, *, model_version: str, dataset: str) -> None:
+        with self._lock:
+            self._model_info = [
+                Observation(1, {"model_version": model_version, "dataset": dataset})
+            ]
+
+    def set_drift(
+        self, per_feature: Mapping[str, float], aggregate: float, *, model_version: str
+    ) -> None:
+        with self._lock:
+            self._drift = [
+                Observation(value, {"feature": feature, "model_version": model_version})
+                for feature, value in per_feature.items()
+            ]
+            self._drift_aggregate = [Observation(aggregate, {"model_version": model_version})]
+
+    def observe_model_ready(self, options: CallbackOptions) -> Iterable[Observation]:
+        with self._lock:
+            return list(self._model_ready)
+
+    def observe_model_info(self, options: CallbackOptions) -> Iterable[Observation]:
+        with self._lock:
+            return list(self._model_info)
+
+    def observe_drift(self, options: CallbackOptions) -> Iterable[Observation]:
+        with self._lock:
+            return list(self._drift)
+
+    def observe_drift_aggregate(self, options: CallbackOptions) -> Iterable[Observation]:
+        with self._lock:
+            return list(self._drift_aggregate)
+
+
 @dataclass
 class Metrics:
     """Holds the OTel instruments used across the serving service."""
@@ -32,10 +99,11 @@ class Metrics:
     error_counter: Counter
     latency_hist: Histogram
     predicted_class_counter: Counter
-    drift_gauge: object  # synchronous Gauge (mlops_feature_drift_psi)
-    drift_aggregate_gauge: object  # synchronous Gauge (mlops_drift_psi_aggregate)
-    model_ready_gauge: object  # synchronous Gauge (mlops_model_ready)
-    model_info_gauge: object  # synchronous Gauge (mlops_model_info)
+    drift_gauge: object  # ObservableGauge (mlops_feature_drift_psi)
+    drift_aggregate_gauge: object  # ObservableGauge (mlops_drift_psi_aggregate)
+    model_ready_gauge: object  # ObservableGauge (mlops_model_ready)
+    model_info_gauge: object  # ObservableGauge (mlops_model_info)
+    _store: _ObservableGaugeStore = field(default_factory=_ObservableGaugeStore, repr=False)
 
     def record_request(self, *, endpoint: str, status_code: int, model_version: str) -> None:
         self.request_counter.add(
@@ -59,30 +127,21 @@ class Metrics:
         )
 
     def set_model_ready(self, ready: bool, *, model_version: str) -> None:
-        self.model_ready_gauge.set(  # type: ignore[attr-defined]
-            1 if ready else 0, {"model_version": model_version}
-        )
+        self._store.set_model_ready(ready, model_version=model_version)
 
     def set_model_info(self, *, model_version: str, dataset: str) -> None:
-        self.model_info_gauge.set(  # type: ignore[attr-defined]
-            1, {"model_version": model_version, "dataset": dataset}
-        )
+        self._store.set_model_info(model_version=model_version, dataset=dataset)
 
     def set_drift(
         self, per_feature: Mapping[str, float], aggregate: float, *, model_version: str
     ) -> None:
-        for feature, value in per_feature.items():
-            self.drift_gauge.set(  # type: ignore[attr-defined]
-                value, {"feature": feature, "model_version": model_version}
-            )
-        self.drift_aggregate_gauge.set(  # type: ignore[attr-defined]
-            aggregate, {"model_version": model_version}
-        )
+        self._store.set_drift(per_feature, aggregate, model_version=model_version)
 
 
 def setup_metrics(meter_provider: MeterProvider) -> Metrics:
     """Create all ``mlops_`` instruments from a configured meter provider."""
     meter = meter_provider.get_meter("mlops_pipeline")
+    store = _ObservableGaugeStore()
 
     request_counter = meter.create_counter(
         "mlops_prediction_requests",
@@ -105,23 +164,27 @@ def setup_metrics(meter_provider: MeterProvider) -> Metrics:
         unit="1",
         description="Predicted-class distribution counts.",
     )
-    drift_gauge = meter.create_gauge(
+    drift_gauge = meter.create_observable_gauge(
         "mlops_feature_drift_psi",
+        callbacks=[store.observe_drift],
         unit="1",
         description="Per-feature PSI vs. training baseline.",
     )
-    drift_aggregate_gauge = meter.create_gauge(
+    drift_aggregate_gauge = meter.create_observable_gauge(
         "mlops_drift_psi_aggregate",
+        callbacks=[store.observe_drift_aggregate],
         unit="1",
         description="Mean PSI across features.",
     )
-    model_ready_gauge = meter.create_gauge(
+    model_ready_gauge = meter.create_observable_gauge(
         "mlops_model_ready",
+        callbacks=[store.observe_model_ready],
         unit="1",
         description="1 when a valid artifact is loaded, else 0.",
     )
-    model_info_gauge = meter.create_gauge(
+    model_info_gauge = meter.create_observable_gauge(
         "mlops_model_info",
+        callbacks=[store.observe_model_info],
         unit="1",
         description="Constant 1 info metric carrying model version/dataset labels.",
     )
@@ -136,4 +199,5 @@ def setup_metrics(meter_provider: MeterProvider) -> Metrics:
         drift_aggregate_gauge=drift_aggregate_gauge,
         model_ready_gauge=model_ready_gauge,
         model_info_gauge=model_info_gauge,
+        _store=store,
     )
