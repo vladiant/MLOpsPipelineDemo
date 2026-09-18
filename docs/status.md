@@ -17,8 +17,8 @@ requirements-analyst → system-architect → python-developer → qa-engineer �
 | Stage | Owner | Status | Notes |
 |-------|-------|--------|-------|
 | 1. Requirements | Requirements Analyst | ✅ Done | SRS at docs/requirements/SRS.md; 8 OQs resolved by PM |
-| 2. Design | System Architect | 🔄 In progress | Designing against SRS + PM decisions |
-| 3. Implementation | Python Developer | ⬜ Not started | |
+| 2. Design | System Architect | ✅ Done | Design at docs/design/DESIGN.md; FastAPI+Pydantic, joblib, src-layout `mlops_pipeline` |
+| 3. Implementation | Python Developer | 🔄 In progress | Implementing against DESIGN.md |
 | 4. QA | QA Engineer | ⬜ Not started | |
 | 5. Release/CI | Release Engineer | ⬜ Not started | |
 | 6. Documentation | Technical Writer | ⬜ Not started | |
@@ -35,6 +35,7 @@ requirements-analyst → system-architect → python-developer → qa-engineer �
 
 ## Blockers / Open Questions
 - None open (all 8 SRS OQs resolved above).
+- Design risks to carry into implementation: R-1 (reconcile OTel/Prometheus pins with CommerceSystemDemo), R-3 (`predict_proba` class ordering must match metadata), R-5 (finalize reproducibility tolerance — recommend exact-equal for fixed seed).
 
 ## Commit / Release Log
-- (pending)
+- `5123303` semver(patch): add SRS and project status tracker for MLOps loop (Stage 1)
