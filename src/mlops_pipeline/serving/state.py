@@ -1,4 +1,7 @@
-"""Mutable application state shared across request handlers."""
+"""Mutable application state shared across request handlers.
+
+@ingroup serving
+"""
 
 from __future__ import annotations
 

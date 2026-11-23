@@ -1,4 +1,9 @@
-"""Serving service: FastAPI app factory, models, predictor, and routes."""
+"""Serving service: FastAPI app factory, models, predictor, and routes.
+
+@defgroup serving Serving
+@ingroup components
+@brief FastAPI app factory, request/response models, predictor, and route handlers.
+"""
 
 from __future__ import annotations
 

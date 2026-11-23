@@ -1,4 +1,7 @@
-"""Rolling-window drift monitor computing per-feature and aggregate PSI (FR-19/FR-20)."""
+"""Rolling-window drift monitor computing per-feature and aggregate PSI (FR-19/FR-20).
+
+@ingroup drift
+"""
 
 from __future__ import annotations
 

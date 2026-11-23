@@ -11,7 +11,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No unreleased changes._
+### Added
+
+- **API documentation (Doxygen)**: root `Doxyfile` renders an HTML API reference
+  for the `mlops_pipeline` package (with `README.md` as the main page), including
+  Graphviz/`dot` class, collaboration, include, call, and directory-dependency
+  diagrams. `@defgroup`/`@ingroup` comments across `src/mlops_pipeline/**` group
+  the code under a top-level `components` group nesting seven logical components
+  (training, artifacts, serving, telemetry, drift, config, cli). Comment-only —
+  no runtime behavior changed. Generated output (`docs/doxygen/`, and the GitLab
+  `public/` dir) is git-ignored.
+- **Docs publishing to GitHub Pages and GitLab Pages**: `.github/workflows/docs.yml`
+  builds the Doxygen HTML (installing doxygen + graphviz) and deploys to GitHub
+  Pages via `actions/upload-pages-artifact` + `actions/deploy-pages` (OIDC,
+  `github-pages` environment), triggered on push to `main` touching `src/**`,
+  `Doxyfile`, `README.md`, or the workflow, plus manual `workflow_dispatch`.
+  `.gitlab-ci.yml` runs an equivalent single `pages` job on the GitLab mirror.
+  Published at <https://vladiant.github.io/MLOpsPipelineDemo/> and
+  <https://vladiant.gitlab.io/MLOpsPipelineDemo/>. One-time enablement: GitHub
+  Settings → Pages → Source = "GitHub Actions"; Pages enabled on the GitLab
+  mirror. Additive tooling only (no public API change) → PATCH-level; **PM to
+  finalize the version bump, date, and tag.**
 
 ## [0.1.0] - 2026-09-19
 

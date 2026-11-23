@@ -1,4 +1,7 @@
-"""Population Stability Index (PSI) — pure, I/O-free functions (DESIGN §4.4/§6.2)."""
+"""Population Stability Index (PSI) — pure, I/O-free functions (DESIGN §4.4/§6.2).
+
+@ingroup drift
+"""
 
 from __future__ import annotations
 

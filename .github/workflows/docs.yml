@@ -1,0 +1,77 @@
+name: Docs (Doxygen → GitHub Pages)
+
+# Builds the Doxygen HTML API docs (including the Graphviz/dot component and
+# dependency SVG diagrams) and publishes them to GitHub Pages.
+#
+# Kept separate from ci.yml on purpose: ci.yml owns lint/type-check/test/build
+# and must stay fast and focused, whereas doc publishing has its own trigger,
+# permissions (Pages/OIDC), environment, and concurrency needs.
+#
+# NOTE: This repo publishes the SAME docs to two hosts — GitHub Pages (here)
+# and GitLab Pages (see root .gitlab-ci.yml) — because the project mirrors to
+# GitLab for Pages hosting. Both run the identical `doxygen Doxyfile` build.
+
+on:
+  push:
+    branches: ["main"]
+    # Only rebuild docs when something that affects them changes.
+    paths:
+      - "src/**"
+      - "Doxyfile"
+      - "README.md"
+      - ".github/workflows/docs.yml"
+  # Allow manual runs from the Actions tab (e.g. to force a re-publish).
+  workflow_dispatch:
+
+# Least privilege at the top level; the deploy job widens scope locally.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Doxygen HTML
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Doxygen + Graphviz
+        run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
+
+      - name: Build API docs
+        # OUTPUT_DIRECTORY=docs/doxygen, HTML_OUTPUT=html → docs/doxygen/html
+        run: doxygen Doxyfile
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/doxygen/html
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+
+    # Deploy only on pushes to main (never on manual builds from other refs
+    # or forks); PRs don't trigger this workflow at all (no pull_request event).
+    if: github.ref == 'refs/heads/main'
+
+    # Scopes required by the official Pages deployment flow (OIDC token).
+    permissions:
+      pages: write # to deploy to Pages
+      id-token: write # to verify the deployment originates from this workflow
+      contents: read # to allow checkout if needed
+
+    # Serialize Pages deployments; never cancel an in-flight publish.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

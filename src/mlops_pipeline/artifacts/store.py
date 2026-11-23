@@ -1,4 +1,7 @@
-"""Filesystem-backed artifact store: immutable save + load (DESIGN §4.3)."""
+"""Filesystem-backed artifact store: immutable save + load (DESIGN §4.3).
+
+@ingroup artifacts
+"""
 
 from __future__ import annotations
 

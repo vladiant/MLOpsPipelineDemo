@@ -1,4 +1,9 @@
-"""Drift detection: PSI math and the rolling-window monitor."""
+"""Drift detection: PSI math and the rolling-window monitor.
+
+@defgroup drift Drift
+@ingroup components
+@brief Population Stability Index math and the rolling-window drift monitor.
+"""
 
 from __future__ import annotations
 

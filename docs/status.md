@@ -26,6 +26,7 @@ requirements-analyst → system-architect → python-developer → qa-engineer �
 | 5b. Defect fix loop | Python Developer → QA | ✅ Done | Gauges → ObservableGauge; 35 tests pass, 91% cov; QA APPROVED, no regression |
 | 5c. Dashboard cleanup | Release Engineer | ✅ Done | Removed last_over_time workaround; live-verified gauges persist per scrape; defect RESOLVED |
 | 6. Documentation | Technical Writer | ✅ Done | Portfolio README (architecture, quickstarts, API, observability, CI, layout); CHANGELOG.md (Keep a Changelog, observable-gauge fix under Fixed); status updated. Awaiting PM version tag |
+| 7. Doxygen docs enhancement | Maintenance → QA → Release → Technical Writer | ✅ Done | Doxyfile + component/dependency diagrams + `@defgroup` grouping; GitHub/GitLab Pages CI. QA APPROVED (ruff/mypy clean, 35 pytest pass); Release published CI; docs reflected in README/CHANGELOG/status. Awaiting PM version tag |
 
 ## PM Decisions (open questions resolved)
 - **OQ-1 Dataset:** Breast-Cancer (Wisconsin) — binary, 30 continuous features.
@@ -65,3 +66,10 @@ requirements-analyst → system-architect → python-developer → qa-engineer �
 - **`last_over_time` audit:** confirmed no doc presents the removed `last_over_time` dashboard workaround as current behavior. `docs/ci-cd/...md §4.1` frames it as RESOLVED/removed; `status.md` row 5c is historical. README/CHANGELOG describe the direct-query gauges.
 - **⚠ Discrepancy for PM (do NOT fix code — doc-vs-doc):** `docs/ci-cd/mlops-pipeline-demo-pipeline.md §3` states the service "pushes OTLP metrics to the collector (`MLOPS_OTLP_ENDPOINT=otel-collector:4317`)", but the actual `docker-compose.yaml` intentionally leaves `MLOPS_OTLP_ENDPOINT` **unset** (OTLP push disabled to avoid double-counting; documented in the compose comments and §4.1 of the same file). §3 contradicts §4.1 and the compose file. README was written to match the real compose (OTLP push disabled, single-target scrape). Recommend system-architect/release-engineer reconcile §3 of the CI-CD doc.
 - **Release `v0.1.0`** tagged (annotated, local) — initial release, MINOR feature set. Push pending user confirmation.
+
+## Technical Writer notes (Stage 7 — Doxygen docs enhancement)
+- **What shipped (Maintenance → QA APPROVED → Release → Technical Writer):** root `Doxyfile` renders the `mlops_pipeline` HTML API reference (README.md as main page) with Graphviz/`dot` class/collaboration/include/call and directory-dependency (`DIRECTORY_GRAPH=YES`) diagrams; output to `docs/doxygen/html/` (git-ignored). `@defgroup`/`@ingroup` comments across `src/mlops_pipeline/**` nest seven components (training, artifacts, serving, telemetry, drift, config, cli) under a top-level `components` group — comment-only, no runtime change. Publishing via `.github/workflows/docs.yml` (GitHub Pages, OIDC) and `.gitlab-ci.yml` (GitLab Pages, alpine:3.20) on the default branch; `.gitignore` adds `docs/doxygen/` and `public/`.
+- **Published URLs:** GitHub Pages <https://vladiant.github.io/MLOpsPipelineDemo/> · GitLab Pages <https://vladiant.gitlab.io/MLOpsPipelineDemo/>.
+- **One-time Pages settings the user must enable:** GitHub repo Settings → Pages → Source = "GitHub Actions"; enable Pages on the GitLab mirror project.
+- **Docs updated:** README.md gains an "API documentation (Doxygen)" subsection (build steps, auto-publish, both URLs, one-time setup); CHANGELOG.md gets an `[Unreleased]` → **Added** entry for the Doxygen docs + Pages publishing. No source/Doxyfile/CI changes made.
+- **Version decision left to PM:** additive tooling, no public API change → PATCH-level appropriate; no release date/tag fabricated. PM to finalize the bump, date, and tag.

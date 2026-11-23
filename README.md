@@ -285,6 +285,39 @@ GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs on pu
 - **docker-build** (after quality): builds the image and smoke-tests it — runs the
   container, polls `/readyz`, and counts `mlops_` metrics.
 
+## API documentation (Doxygen)
+
+[Doxygen](https://www.doxygen.org/) renders an HTML API reference for the
+`mlops_pipeline` package straight from its source and docstrings. Graphviz/`dot`
+diagrams (class, collaboration, include, call, and directory-dependency graphs)
+visualize how the seven logical components — **training**, **artifacts**,
+**serving**, **telemetry**, **drift**, **config**, and **cli** — depend on one
+another; the components are grouped via Doxygen `@defgroup`/`@ingroup` comments
+under a top-level `components` group. This is API/structure reference, not a
+tutorial — the sections above remain the narrative guide.
+
+Build it locally (requires Graphviz for the diagrams):
+
+```bash
+sudo apt-get install -y doxygen graphviz   # Debian/Ubuntu; use your package manager equivalent
+doxygen Doxyfile
+# → open docs/doxygen/html/index.html
+```
+
+`README.md` is the generated docs' main page. The output lands in
+`docs/doxygen/html/` and is git-ignored.
+
+On push to `main` the same `doxygen Doxyfile` build auto-publishes to two Pages
+hosts:
+
+- **GitHub Pages** — <https://vladiant.github.io/MLOpsPipelineDemo/>
+  (via [.github/workflows/docs.yml](.github/workflows/docs.yml)).
+- **GitLab Pages** — <https://vladiant.gitlab.io/MLOpsPipelineDemo/>
+  (via [.gitlab-ci.yml](.gitlab-ci.yml) on the GitLab mirror).
+
+> One-time setup: GitHub repo **Settings → Pages → Source = "GitHub Actions"**,
+> and enable **Pages** on the GitLab mirror project.
+
 ## Project layout
 
 ```

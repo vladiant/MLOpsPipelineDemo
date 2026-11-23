@@ -1,4 +1,9 @@
-"""Environment-driven configuration (12-factor) via pydantic-settings."""
+"""Environment-driven configuration (12-factor) via pydantic-settings.
+
+@defgroup config Config
+@ingroup components
+@brief Environment-driven runtime settings (12-factor) via pydantic-settings.
+"""
 
 from __future__ import annotations
 

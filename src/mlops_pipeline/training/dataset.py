@@ -1,4 +1,7 @@
-"""Dataset loading and train/test splitting for the Breast-Cancer demo (FR-1)."""
+"""Dataset loading and train/test splitting for the Breast-Cancer demo (FR-1).
+
+@ingroup training
+"""
 
 from __future__ import annotations
 

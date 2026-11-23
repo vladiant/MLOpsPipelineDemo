@@ -1,4 +1,7 @@
-"""Training orchestrator: load → train → evaluate → persist artifact (FR-1..FR-7)."""
+"""Training orchestrator: load → train → evaluate → persist artifact (FR-1..FR-7).
+
+@ingroup training
+"""
 
 from __future__ import annotations
 

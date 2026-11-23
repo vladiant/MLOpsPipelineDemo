@@ -1,4 +1,9 @@
-"""Training pipeline: dataset loading, baseline capture, and the train orchestrator."""
+"""Training pipeline: dataset loading, baseline capture, and the train orchestrator.
+
+@defgroup training Training
+@ingroup components
+@brief Dataset loading, training baseline capture, and the train orchestrator.
+"""
 
 from __future__ import annotations
 

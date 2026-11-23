@@ -1,4 +1,7 @@
-"""Artifact version-id construction and the atomic ``latest.txt`` pointer (FR-4/FR-9)."""
+"""Artifact version-id construction and the atomic ``latest.txt`` pointer (FR-4/FR-9).
+
+@ingroup artifacts
+"""
 
 from __future__ import annotations
 

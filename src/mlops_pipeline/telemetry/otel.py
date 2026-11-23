@@ -1,4 +1,7 @@
-"""Wire the OTel MeterProvider + Prometheus exporter and mount ``/metrics`` (FR-15)."""
+"""Wire the OTel MeterProvider + Prometheus exporter and mount ``/metrics`` (FR-15).
+
+@ingroup telemetry
+"""
 
 from __future__ import annotations
 

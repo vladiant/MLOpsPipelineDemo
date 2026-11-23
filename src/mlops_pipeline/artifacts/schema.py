@@ -3,6 +3,8 @@
 This module has no project-internal dependencies; ``training``, ``serving`` and
 ``drift`` all depend on it. Serialization to/from plain JSON dicts is explicit so
 metadata and baseline files are stable and human-readable (FR-5, FR-6).
+
+@ingroup artifacts
 """
 
 from __future__ import annotations

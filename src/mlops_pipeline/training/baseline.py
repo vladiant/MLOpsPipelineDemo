@@ -1,4 +1,7 @@
-"""Training-time baseline capture: per-feature quantile histograms (FR-6)."""
+"""Training-time baseline capture: per-feature quantile histograms (FR-6).
+
+@ingroup training
+"""
 
 from __future__ import annotations
 

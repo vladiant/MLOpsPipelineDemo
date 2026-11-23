@@ -5,6 +5,8 @@ their current value is re-reported on every collection/scrape. The Prometheus
 exporter (0.65b0) drops a *synchronous* gauge value after the first ``collect()``,
 which made ``mlops_model_ready``/``mlops_model_info``/drift PSI read as stale
 between updates; observable gauges match DESIGN §4.5 and fix that.
+
+@ingroup telemetry
 """
 
 from __future__ import annotations

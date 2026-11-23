@@ -1,4 +1,7 @@
-"""Pydantic v2 request/response models for the serving API (DESIGN §4.6)."""
+"""Pydantic v2 request/response models for the serving API (DESIGN §4.6).
+
+@ingroup serving
+"""
 
 from __future__ import annotations
 

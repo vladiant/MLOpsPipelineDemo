@@ -1,4 +1,7 @@
-"""FastAPI dependency providers reading from ``app.state`` (DESIGN §4.7)."""
+"""FastAPI dependency providers reading from ``app.state`` (DESIGN §4.7).
+
+@ingroup serving
+"""
 
 from __future__ import annotations
 

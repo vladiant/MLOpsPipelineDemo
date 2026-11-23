@@ -1,0 +1,30 @@
+# GitLab CI — Doxygen HTML → GitLab Pages
+#
+# This repository is primarily developed on GitHub (see .github/workflows/) and
+# is mirrored to GitLab *only* to get a second Pages host. We therefore keep
+# this file deliberately minimal: a single `pages` job that reproduces the exact
+# same `doxygen Doxyfile` build used by the GitHub docs workflow. We intentionally
+# do NOT replicate the lint/type-check/test matrix here — that lives on GitHub.
+
+# Pinned image for reproducibility. Alpine 3.20 ships doxygen + graphviz, and
+# ttf-freefont provides the fonts Graphviz/dot needs to render the SVG diagrams.
+image: alpine:3.20
+
+pages:
+  stage: deploy
+  script:
+    - apk add --no-cache doxygen graphviz ttf-freefont
+    # OUTPUT_DIRECTORY=docs/doxygen, HTML_OUTPUT=html → docs/doxygen/html
+    - doxygen Doxyfile
+    # GitLab Pages serves the contents of the `public/` directory.
+    - rm -rf public
+    - cp -r docs/doxygen/html public
+  artifacts:
+    paths:
+      - public
+  # Modern publish config: serve the `public/` artifact as the Pages site.
+  pages:
+    publish: public
+  # Only publish from the default branch (main); skip on all other branches/MRs.
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'

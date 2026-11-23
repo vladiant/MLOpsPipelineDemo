@@ -1,4 +1,9 @@
-"""Console-script entry points: ``mlops-train`` and ``mlops-serve`` (DESIGN §2.2)."""
+"""Console-script entry points: ``mlops-train`` and ``mlops-serve`` (DESIGN §2.2).
+
+@defgroup cli CLI
+@ingroup components
+@brief Console-script entry points: ``mlops-train`` and ``mlops-serve``.
+"""
 
 from __future__ import annotations
 

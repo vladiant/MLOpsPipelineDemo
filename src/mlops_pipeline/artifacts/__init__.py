@@ -1,4 +1,9 @@
-"""Artifact packaging: shared schema, versioning, and the filesystem store."""
+"""Artifact packaging: shared schema, versioning, and the filesystem store.
+
+@defgroup artifacts Artifacts
+@ingroup components
+@brief Artifact contract (schema), version-id construction, and the filesystem store.
+"""
 
 from __future__ import annotations
 

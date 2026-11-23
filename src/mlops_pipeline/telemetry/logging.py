@@ -1,4 +1,7 @@
-"""Structured JSON logging to stdout (FR-14)."""
+"""Structured JSON logging to stdout (FR-14).
+
+@ingroup telemetry
+"""
 
 from __future__ import annotations
 

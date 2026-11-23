@@ -1,4 +1,7 @@
-"""Route handlers: predict / healthz / readyz (DESIGN §4.7/§4.9)."""
+"""Route handlers: predict / healthz / readyz (DESIGN §4.7/§4.9).
+
+@ingroup serving
+"""
 
 from __future__ import annotations
 

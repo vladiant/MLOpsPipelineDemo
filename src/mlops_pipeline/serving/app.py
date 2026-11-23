@@ -1,4 +1,7 @@
-"""FastAPI application factory with artifact-loading lifespan (DESIGN §4.7)."""
+"""FastAPI application factory with artifact-loading lifespan (DESIGN §4.7).
+
+@ingroup serving
+"""
 
 from __future__ import annotations
 

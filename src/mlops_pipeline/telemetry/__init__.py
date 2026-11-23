@@ -1,4 +1,9 @@
-"""Telemetry: OTel metrics instruments, Prometheus wiring, and JSON logging."""
+"""Telemetry: OTel metrics instruments, Prometheus wiring, and JSON logging.
+
+@defgroup telemetry Telemetry
+@ingroup components
+@brief OpenTelemetry metric instruments, Prometheus wiring, and structured JSON logging.
+"""
 
 from __future__ import annotations
 

@@ -1,4 +1,7 @@
-"""Predictor wrapping a loaded estimator with schema validation (DESIGN §4.8)."""
+"""Predictor wrapping a loaded estimator with schema validation (DESIGN §4.8).
+
+@ingroup serving
+"""
 
 from __future__ import annotations
 
