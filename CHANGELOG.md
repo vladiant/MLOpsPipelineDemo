@@ -5,11 +5,9 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-> **Note:** the `[0.1.0]` heading and date below are placeholders for the first
-> tagged release; the project maintainer finalizes the version and date when the
-> release tag is cut.
-
 ## [Unreleased]
+
+## [0.1.1] - 2026-11-23
 
 ### Added
 
@@ -30,8 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Published at <https://vladiant.github.io/MLOpsPipelineDemo/> and
   <https://vladiant.gitlab.io/MLOpsPipelineDemo/>. One-time enablement: GitHub
   Settings → Pages → Source = "GitHub Actions"; Pages enabled on the GitLab
-  mirror. Additive tooling only (no public API change) → PATCH-level; **PM to
-  finalize the version bump, date, and tag.**
+  mirror. Additive tooling only (no public API change) → PATCH-level.
 
 ## [0.1.0] - 2026-09-19
 
@@ -93,5 +90,6 @@ First complete, runnable MLOps loop: train → package → serve → observe →
   with observer callbacks, so each value re-reports at its current level on every
   scrape.
 
-[Unreleased]: https://example.com/compare/v0.1.0...HEAD
+[Unreleased]: https://example.com/compare/v0.1.1...HEAD
+[0.1.1]: https://example.com/compare/v0.1.0...v0.1.1
 [0.1.0]: https://example.com/releases/tag/v0.1.0
