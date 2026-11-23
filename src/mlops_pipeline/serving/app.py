@@ -30,7 +30,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(
         title="MLOpsPipelineDemo serving",
-        version="0.1.0",
+        version="0.1.1",
         lifespan=_lifespan,
     )
     app.state.settings = settings
